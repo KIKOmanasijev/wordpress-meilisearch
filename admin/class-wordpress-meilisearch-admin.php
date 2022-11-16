@@ -40,6 +40,8 @@ class Wordpress_Meilisearch_Admin {
 	 */
 	private $version;
 
+	private Wordpress_Meilisearch_Repository $repository;
+
 	/**
 	 * Initialize the class and set its properties.
 	 *
@@ -51,7 +53,7 @@ class Wordpress_Meilisearch_Admin {
 
 		$this->plugin_name = $plugin_name;
 		$this->version = $version;
-
+		$this->repository = new Wordpress_Meilisearch_Repository();
 	}
 
 	/**
@@ -132,7 +134,7 @@ class Wordpress_Meilisearch_Admin {
 
 		$index          = $_REQUEST['index'] ?? 'item';
 		$offset         = $_REQUEST['offset'] ?? 0;
-		$posts_per_page = 10000;
+		$posts_per_page = 100;
 
 		$query = new WP_Query([
 			'posts_per_page' => $posts_per_page,
@@ -140,7 +142,13 @@ class Wordpress_Meilisearch_Admin {
 			'offset'         => $offset
 		]);
 
-		// pretend that we are doing some transformation here...
+		foreach ( $query->get_posts() as $post ){
+			$document = Wordpress_Meilisearch_Mapper::build_item_document( $post );
+
+			if ( $document ){
+				$this->repository->add_document( $document );
+			}
+		}
 
 		wp_send_json([
 			'data'           => $_REQUEST['index'] ?? false,

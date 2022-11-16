@@ -14,7 +14,6 @@ import axios from  'axios';
             let statusBadge = $(evt.target).closest('tr').find('.status-badge');
 
             statusBadge.text('indexing...');
-            // statusBadge.removeClass('bg-gray-600').removeClass('text-white').addClass('bg-orange-600 text-orange-100');
             statusBadge.removeClass (function (index, css) {
                 return (css.match (/^(bg-|text-)/g) || []).join(' ');
             }).addClass('bg-orange-600 text-orange-100');
@@ -24,16 +23,19 @@ import axios from  'axios';
     });
 
     async function start_reindex( action, index, offset, target = null, statusBadge = null ){
-        var params = new URLSearchParams();
+        let params = new URLSearchParams();
+        let progressBar = $(".progress[data-index='item']");
 
         params.append('action', action);
         params.append('index', index );
         params.append('offset', offset );
 
+        // Initialise progress bar at 0%.
+        update_progress_bar( progressBar, 0 )
+
         let data = await axios.post(wpMeiliRest.ajaxUrl, params);
 
         try {
-            let progressBar = $(".progress[data-index='item']");
 
             if ( data.data.posts_per_page * offset <= parseInt(data.data.total) ){
                 let percentage  = ((data.data.posts_per_page * offset) / parseInt(data.data.total)) * 100;

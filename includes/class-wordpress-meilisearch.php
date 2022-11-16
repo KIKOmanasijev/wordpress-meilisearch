@@ -122,6 +122,16 @@ class Wordpress_Meilisearch {
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-wordpress-meilisearch-public.php';
 
+		/**
+		 * The class responsible for transforming WP posts into valid Meilisearch documents
+		 */
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-wordpress-meilisearch-mapper.php';
+
+		/**
+		 * The class responsible for transferring data between WP and Meilisearch client
+		 */
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-wordpress-meilisearch-repository.php';
+
 		$this->loader = new Wordpress_Meilisearch_Loader();
 
 	}
