@@ -14,7 +14,9 @@
 ?>
 
 <div class="plugin-dashboard-wrapper max-w-7xl px-4 sm:px-6 lg:px-8">
-    <!-- This file should primarily consist of HTML with a little bit of PHP. -->
+    <!-- Compiling Tailwind classes so we can use them dynamically -->
+    <template class="hidden bg-gray-600 bg-orange-600 bg-green-100 text-white text-orange-100 text-green-700 bg-green-500"></template>
+
     <h2 class="mt-8 max-w-6xl text-lg font-medium leading-6 text-gray-900">All Indexes</h2>
 
     <!-- Activity table (small breakpoint and up) -->
@@ -43,13 +45,16 @@
                                 </div>
 
                                 <div class="w-full bg-gray-200 rounded-full dark:bg-gray-700 hidden">
-                                    <div data-index="item" class="progress bg-blue-600 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full" style="width: 45%"> 45%</div>
+                                    <div data-index="item" class="progress bg-orange-600 text-xs font-medium text-orange-100 text-center p-0.5 leading-none rounded-full" style="width: 45%"> 45%</div>
                                 </div>
                             </div>
 
                         </td>
                         <td class="hidden whitespace-nowrap px-6 py-4 text-sm text-gray-500 md:block">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 capitalize">success</span>
+                            <span
+                                data-index="item" class="status-badge inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-600 text-white capitalize ">
+                                idle
+                            </span>
                         </td>
                         <td class="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-500">
                             <form>
