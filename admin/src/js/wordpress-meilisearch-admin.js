@@ -14,7 +14,10 @@ import axios from  'axios';
             let statusBadge = $(evt.target).closest('tr').find('.status-badge');
 
             statusBadge.text('indexing...');
-            statusBadge.removeClass('bg-gray-600').removeClass('text-white').addClass('bg-orange-600 text-orange-100');
+            // statusBadge.removeClass('bg-gray-600').removeClass('text-white').addClass('bg-orange-600 text-orange-100');
+            statusBadge.removeClass (function (index, css) {
+                return (css.match (/^(bg-|text-)/g) || []).join(' ');
+            }).addClass('bg-orange-600 text-orange-100');
 
             start_reindex( 'start_reindex', index, 0, evt.target, statusBadge );
         });
@@ -46,7 +49,9 @@ import axios from  'axios';
 
                 if ( statusBadge ){
                     statusBadge.text('completed');
-                    statusBadge.removeClass('bg-orange-600').removeClass('text-orange-100').addClass('bg-green-100 text-green-700');
+                    statusBadge.removeClass (function (index, css) {
+                        return (css.match (/^(bg-|text-)/g) || []).join(' ');
+                    }).addClass('bg-green-100 text-green-700');
                     progressBar.removeClass('bg-orange-600').addClass('bg-green-500')
                 }
             }
