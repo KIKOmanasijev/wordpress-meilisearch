@@ -114,7 +114,7 @@ class Wordpress_Meilisearch_Admin {
 			"meilisearch-dashboard",
 			array( $this, "render_meilisearch_dashboard_page" ),
 			"dashicons-database",
-			100
+			2
 		);
 	}
 
@@ -132,28 +132,39 @@ class Wordpress_Meilisearch_Admin {
 
 	public function handle_ajax_start_reindex(){
 
-		$index          = $_REQUEST['index'] ?? 'item';
-		$offset         = $_REQUEST['offset'] ?? 0;
-		$posts_per_page = 100;
+		$index           = $_REQUEST['index'] ?? 'item';
+		$offset          = $_REQUEST['offset'] ?? 0;
+		$posts_per_page  = 1000;
+		$errors          = [];
+		$valid_documents = [];
 
 		$query = new WP_Query([
 			'posts_per_page' => $posts_per_page,
 			'post_type'      => $index,
-			'offset'         => $offset
+			'offset'         => $offset * $posts_per_page
 		]);
 
 		foreach ( $query->get_posts() as $post ){
 			$document = Wordpress_Meilisearch_Mapper::build_item_document( $post );
 
+			if ( isset( $document['error'] ) && $document['error'] ){
+				$errors[] = sprintf('Product with id %s missing a category, skipping it.', $post->ID);
+				continue;
+			}
+
 			if ( $document ){
-				$this->repository->add_document( $document );
+				$valid_documents[] = $document;
 			}
 		}
+
+		$this->repository->add_documents( $valid_documents );
 
 		wp_send_json([
 			'data'           => $_REQUEST['index'] ?? false,
 			'total'          => wp_count_posts( $index )->publish,
-			'posts_per_page' => $posts_per_page
+			'posts_per_page' => $posts_per_page,
+			'succeeded'      => $posts_per_page - count($errors),
+			'failed'         => count($errors)
 		], 200);
 		die;
 	}
