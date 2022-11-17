@@ -145,7 +145,7 @@ class Wordpress_Meilisearch_Admin {
 		]);
 
 		foreach ( $query->get_posts() as $post ){
-			$document = Wordpress_Meilisearch_Mapper::build_item_document( $post );
+			$document = apply_filters( "meili_{$index}_index_settings", [ "id" => $post->ID ], $post );
 
 			if ( isset( $document['error'] ) && $document['error'] ){
 				$errors[] = sprintf('Product with id %s missing a category, skipping it.', $post->ID);
