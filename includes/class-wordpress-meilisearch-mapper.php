@@ -7,7 +7,10 @@ class Wordpress_Meilisearch_Mapper {
 		$categories = wp_get_post_terms( $post->ID, 'item-category' );
 
 		if ( !$categories ){
-			return false;
+			return [
+				'error' => true,
+				'message' => sprintf('Product with id %s missing a category, skipping it.', $post->ID)
+			];
 		}
 
 		$category = $categories[0]->name;

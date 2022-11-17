@@ -1,5 +1,11 @@
 import axios from  'axios';
 
+// Counts valid indexed posts.
+var valid       = 0;
+
+// Counts corrupted indexed posts.
+var corrupted   = 0;
+
 (function( $ ) {
 	'use strict';
 
@@ -17,6 +23,8 @@ import axios from  'axios';
             statusBadge.removeClass (function (index, css) {
                 return (css.match (/^(bg-|text-)/g) || []).join(' ');
             }).addClass('bg-orange-600 text-orange-100');
+
+            $("#error-logs-parent").removeClass('blur-lg cursor-not-allowed');
 
             start_reindex( 'start_reindex', index, 0, evt.target, statusBadge );
         });
@@ -39,9 +47,8 @@ import axios from  'axios';
 
             if ( data.data.posts_per_page * offset <= parseInt(data.data.total) ){
                 let percentage  = ((data.data.posts_per_page * offset) / parseInt(data.data.total)) * 100;
-
+                update_counters( data.data.succeeded, data.data.failed );
                 start_reindex( action, index, ++offset, target, statusBadge );
-
                 update_progress_bar( progressBar, percentage )
             } else {
                 if ( target ){
@@ -68,6 +75,14 @@ import axios from  'axios';
         progressBar.css( 'width', parseInt( percentage ) + '%' )
         progressBar.text( parseInt( percentage ) + '%' )
         progressBar.parent().removeClass('hidden');
+    }
+
+    function update_counters( validProducts, corruptedProducts ){
+        valid += parseInt( validProducts );
+        corrupted += parseInt( corruptedProducts );
+
+        $("#countIndexed").text( valid );
+        $("#countFailed").text( corrupted );
     }
 
 })( jQuery );
