@@ -13,8 +13,8 @@ class Wordpress_Meilisearch_Repository {
 		]);
 	}
 
-	public function add_document( $document ){
+	public function add_documents( $documents ){
 		// TODO: dynamic index choosing
-		$this->client->index('items')->addDocuments( $document );
+		$this->client->index('items')->addDocuments( $documents );
 	}
 }
