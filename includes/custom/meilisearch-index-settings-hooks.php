@@ -24,6 +24,7 @@ function build_item_document( $attributes, $post ){
 	$supplier_price = get_field('price', $post->ID );
 	$market_price = get_field('suggested_sale_price', $post->ID );
 	$profit = floatval( $market_price ) - floatval( $supplier_price );
+	$shipping_cost = get_field('shipping_cost', $post->ID) ?? 0;
 
 	$images = get_field( 'images', $post->ID );
 	$image = '';
@@ -40,8 +41,28 @@ function build_item_document( $attributes, $post ){
 		'category_link' => $category_link,
 		'supplier_price' => $supplier_price,
 		'market_price' => $market_price,
+		'shipping_cost' => $shipping_cost,
 		'status' => $post->post_status,
 		'profit' => $profit,
 		'updated_at' => time()
 	];
+}
+
+add_filter('meilisearch_modify_items_property_labels', "meili_item_modify_property_labels");
+function meili_item_modify_property_labels( $items ){
+	foreach ( $items as &$item ){
+		switch( $item['label'] ){
+			case 'updated_at':
+				$item['label'] = 'Publish Date';
+				break;
+			case 'profit':
+				$item['label'] = 'Profit Margin';
+				break;
+			case 'market_price':
+				$item['label'] = 'Market Price';
+				break;
+		}
+	}
+
+	return $items;
 }
