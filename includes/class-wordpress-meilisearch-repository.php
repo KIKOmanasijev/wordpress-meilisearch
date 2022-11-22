@@ -7,10 +7,18 @@ class Wordpress_Meilisearch_Repository {
 		// TODO: dynamic server credentials
 		$this->client = new Client('http://localhost:7700');
 
+		// TODO: Implement this with a WP filter so filterable attributes is modifiable / use GUI settings in future?.
 		$this->client->index('items')->updateFilterableAttributes([
 			'profit',
 			'category',
 			'status'
+		]);
+
+		// TODO: Implement this with a WP filter so sortable attributes is modifiable / use GUI settings in future?.
+		$this->client->index('items')->updateSortableAttributes([
+			'updated_at',
+			'profit',
+			'market_price'
 		]);
 	}
 
