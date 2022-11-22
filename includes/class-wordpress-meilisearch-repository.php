@@ -24,13 +24,13 @@ class Wordpress_Meilisearch_Repository {
 		$this->client->index('items')->deleteDocuments($documents);
 	}
 
-	public function unpublish_documents( $documents ){
+	public function update_status_on_documents( $documents ){
 		if ( ! is_array(  $documents ) ){
 			$documents = array( $documents );
 		}
 
 		foreach ( $documents as $post_id ){
-			$result = $this->client->index('items')->updateDocuments([
+			$this->client->index('items')->updateDocuments([
 				[
 					'id' => $post_id,
 					'status' => get_post( $post_id )->post_status

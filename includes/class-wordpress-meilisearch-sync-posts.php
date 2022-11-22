@@ -71,7 +71,7 @@ class Wordpress_Meilisearch_Sync_Posts {
 	}
 
 	public function action_sync_on_trash( $post_id ){
-		$this->repository->unpublish_documents( [ $post_id ] );
+		$this->repository->update_status_on_documents( [ $post_id ] );
 	}
 
 	public function action_sync_on_delete( $post_id ){
