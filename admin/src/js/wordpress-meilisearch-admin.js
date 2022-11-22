@@ -15,7 +15,8 @@ var corrupted   = 0;
 
             let index = $(evt.target).attr('data-index')
 
-            $(evt.target).attr('disabled', true);
+            $('.start-reindex').attr('disabled', true);
+            $('.clear-index').attr('disabled', true);
 
             let statusBadge = $(evt.target).closest('tr').find('.status-badge');
 
@@ -27,6 +28,14 @@ var corrupted   = 0;
             $("#error-logs-parent").removeClass('blur-lg cursor-not-allowed');
 
             start_reindex( 'start_reindex', index, 0, evt.target, statusBadge );
+        });
+
+        $(".clear-index").on( 'click', ( evt ) => {
+            evt.preventDefault();
+
+            let index = $(evt.target).attr('data-index')
+
+            clear_index( 'clear_index', index );
         });
     });
 
@@ -52,7 +61,8 @@ var corrupted   = 0;
                 update_progress_bar( progressBar, percentage )
             } else {
                 if ( target ){
-                    $(target).attr('disabled', false);
+                    $('.start-reindex').attr('disabled', false);
+                    $('.clear-index').attr('disabled', false);
                     update_progress_bar(progressBar, 100);
                 }
 
@@ -67,6 +77,21 @@ var corrupted   = 0;
         } catch(e){
             start_reindex( action, index, offset, statusBadge );
             console.log('Error occurred, uploading the same batch again.');
+            console.log(e);
+        }
+    }
+
+    async function clear_index( action, index){
+        let params = new URLSearchParams();
+
+        params.append('action', action);
+
+        let data = await axios.post(wpMeiliRest.ajaxUrl, params);
+
+        try {
+            window.alert('Index cleared. 🥳');
+        } catch(e){
+            console.log('Error occurred, try clearing the index later.');
             console.log(e);
         }
     }

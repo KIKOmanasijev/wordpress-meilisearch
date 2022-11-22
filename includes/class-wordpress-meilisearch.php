@@ -181,6 +181,7 @@ class Wordpress_Meilisearch {
 		$this->loader->add_action( 'admin_menu', $plugin_admin, 'create_meilisearch_dashboard_page' );
 
 		$this->loader->add_action( 'wp_ajax_start_reindex', $plugin_admin, 'handle_ajax_start_reindex' );
+		$this->loader->add_action( 'wp_ajax_clear_index', $plugin_admin, 'handle_ajax_clear_index' );
 	}
 
 	/**
@@ -210,9 +211,14 @@ class Wordpress_Meilisearch {
 
 		$plugin_sync = new Wordpress_Meilisearch_Sync_Posts( $this->get_plugin_name(), $this->get_version() );
 
-		$this->loader->add_action( 'wp_insert_post', $plugin_sync, 'action_sync_on_update' );
-		$this->loader->add_action( 'add_attachment', $plugin_sync, 'action_sync_on_update' );
-		$this->loader->add_action( 'edit_attachment', $plugin_sync, 'action_sync_on_update' );
+		$this->loader->add_action( 'wp_insert_post', $plugin_sync, 'action_sync_on_update', 999 );
+		$this->loader->add_action( 'add_attachment', $plugin_sync, 'action_sync_on_update', 999 );
+		$this->loader->add_action( 'edit_attachment', $plugin_sync, 'action_sync_on_update', 999 );
+		$this->loader->add_action( 'publish_post', $plugin_sync, 'action_sync_on_update', 999 );
+
+		$this->loader->add_action( 'wp_trash_post', $plugin_sync, 'action_sync_on_trash', 999 );
+
+		$this->loader->add_action( 'delete_post', $plugin_sync, 'action_sync_on_delete', 999 );
 	}
 
 	/**

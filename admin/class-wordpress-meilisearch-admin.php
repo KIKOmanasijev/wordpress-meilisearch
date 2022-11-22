@@ -168,4 +168,20 @@ class Wordpress_Meilisearch_Admin {
 		], 200);
 		die;
 	}
+
+	public function handle_ajax_clear_index(){
+		$response = $this->repository->clear_index( 'items' );
+
+		var_dump( $response );
+		die;
+
+		wp_send_json([
+			'data'           => $_REQUEST['index'] ?? false,
+			'total'          => wp_count_posts( $index )->publish,
+			'posts_per_page' => $posts_per_page,
+			'succeeded'      => $posts_per_page - count($errors),
+			'failed'         => count($errors)
+		], 200);
+		die;
+	}
 }

@@ -58,15 +58,18 @@
                                     </span>
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-500">
-                                    <form>
-                                        <button
-                                                type="submit"
-                                                class="disabled:opacity-75 disabled:cursor-not-allowed start-reindex inline-flex items-center rounded-full border border-transparent bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                                                data-index="item"
-                                        >
-                                            Reindex
-                                        </button>
-                                    </form>
+                                    <button
+                                            class="disabled:opacity-75 disabled:cursor-not-allowed start-reindex inline-flex items-center rounded-full border border-transparent bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                            data-index="item"
+                                    >
+                                        Reindex
+                                    </button>
+                                    <button
+                                            class="disabled:opacity-75 disabled:cursor-not-allowed clear-index inline-flex items-center rounded-full border border-transparent bg-red-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                            data-index="item"
+                                    >
+                                        Clear
+                                    </button>
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-500">
                                     <time datetime="2020-07-11">July 11, 2020</time>
