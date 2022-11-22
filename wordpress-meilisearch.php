@@ -1,12 +1,17 @@
 <?php
 
 /**
- * The plugin bootstrap file
  *
- * This file is read by WordPress to generate the plugin information in the plugin
- * admin area. This file also includes all of the dependencies used by the plugin,
- * registers the activation and deactivation functions, and defines a function
- * that starts the plugin.
+ * To-Do's:
+ * ✅ Basic dashboard
+ * ✅ Start indexing Item's CPT.
+ * ✅ Animate progress bar when indexing certain CPT
+ * ✅ Show current stats of succeeded/failed posts while indexing.
+ * ⏳ Front end facets
+ * 📜 Checking for valid Meili connection before activating the plugin.
+ * 📜 Syncing WP Posts to Meili's appropriate index.
+ * 📜 Load all CPTs in the indexing table (WP dashboard)
+ * 📜 Possibility to include/exclude CPTs via the dashboard
  *
  * @link              https://brandsgateway.com
  * @since             1.0.0
@@ -33,7 +38,6 @@ if ( ! defined( 'WPINC' ) ) {
 /**
  * Currently plugin version.
  * Start at version 1.0.0 and use SemVer - https://semver.org
- * Rename this for your plugin and update it as you release new versions.
  */
 define( 'WORDPRESS_MEILISEARCH_VERSION', '1.0.0' );
 define( 'WORDPRESS_MEILISEARCH_PLUGIN_URL', plugin_dir_url( __FILE__ ) );

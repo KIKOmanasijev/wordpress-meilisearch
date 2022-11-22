@@ -78,6 +78,7 @@ class Wordpress_Meilisearch {
 		$this->set_locale();
 		$this->define_admin_hooks();
 		$this->define_public_hooks();
+		$this->define_sync_hooks();
 
 	}
 
@@ -131,6 +132,11 @@ class Wordpress_Meilisearch {
 		 * The class responsible for transferring data between WP and Meilisearch client
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-wordpress-meilisearch-repository.php';
+
+		/**
+		 * TODO: Document this class
+		 */
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-wordpress-meilisearch-sync-posts.php';
 
 		/**
 		 * TODO: Document this class.
@@ -191,6 +197,22 @@ class Wordpress_Meilisearch {
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
 
+	}
+
+	/**
+	 * Register all of the hooks related to syncing WP posts to Meili
+	 * of the plugin.
+	 *
+	 * @since    1.0.0
+	 * @access   private
+	 */
+	private function define_sync_hooks() {
+
+		$plugin_sync = new Wordpress_Meilisearch_Sync_Posts( $this->get_plugin_name(), $this->get_version() );
+
+		$this->loader->add_action( 'wp_insert_post', $plugin_sync, 'action_sync_on_update' );
+		$this->loader->add_action( 'add_attachment', $plugin_sync, 'action_sync_on_update' );
+		$this->loader->add_action( 'edit_attachment', $plugin_sync, 'action_sync_on_update' );
 	}
 
 	/**
