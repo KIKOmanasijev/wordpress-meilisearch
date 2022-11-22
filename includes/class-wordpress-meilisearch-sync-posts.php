@@ -70,4 +70,12 @@ class Wordpress_Meilisearch_Sync_Posts {
 		$this->repository->add_documents( $document );
 	}
 
+	public function action_sync_on_trash( $post_id ){
+		$this->repository->unpublish_documents( [ $post_id ] );
+	}
+
+	public function action_sync_on_delete( $post_id ){
+		$this->repository->delete_documents( [ $post_id ] );
+	}
+
 }

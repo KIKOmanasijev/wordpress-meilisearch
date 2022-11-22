@@ -40,6 +40,7 @@ function build_item_document( $attributes, $post ){
 		'category_link' => $category_link,
 		'supplier_price' => $supplier_price,
 		'market_price' => $market_price,
+		'status' => $post->post_status,
 		'profit' => $profit,
 		'updated_at' => time()
 	];
