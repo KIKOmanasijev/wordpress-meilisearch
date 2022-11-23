@@ -50,19 +50,44 @@ function build_item_document( $attributes, $post ){
 
 add_filter('meilisearch_modify_items_property_labels', "meili_item_modify_property_labels");
 function meili_item_modify_property_labels( $items ){
+	$with_order = [];
+
 	foreach ( $items as &$item ){
 		switch( $item['label'] ){
 			case 'updated_at':
-				$item['label'] = 'Publish Date';
+				$with_order[] = [
+					'label' => 'Sort by oldest',
+					'value' => $item['value'] . ':asc'
+				];
+				$with_order[] = [
+					'label' => 'Sort by newest',
+					'value' => $item['value'] . ':desc'
+				];
 				break;
 			case 'profit':
-				$item['label'] = 'Profit Margin';
+				$with_order[] = [
+					'label' => 'Sort by profit margin: high to low',
+					'value' => $item['value'] . ':desc'
+				];
+
+				$with_order[] = [
+					'label' => 'Sort by profit margin: low to high',
+					'value' => $item['value'] . ':asc'
+				];
 				break;
 			case 'market_price':
-				$item['label'] = 'Market Price';
+				$with_order[] = [
+					'label' => 'Sort by market price: high to low',
+					'value' => $item['value'] . ':desc'
+				];
+
+				$with_order[] = [
+					'label' => 'Sort by market price: low to high',
+					'value' => $item['value'] . ':asc'
+				];
 				break;
 		}
 	}
 
-	return $items;
+	return array_reverse( $with_order );
 }
