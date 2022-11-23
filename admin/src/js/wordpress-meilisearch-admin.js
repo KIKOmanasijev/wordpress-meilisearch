@@ -18,12 +18,18 @@ var warningExitTimesShown = 0;
  		$(".start-reindex").on( 'click', ( evt ) => {
             evt.preventDefault();
 
+            // The chosen index for reindexing in text value.
             let index = $(evt.target).attr('data-index')
+
+            // Status badge (can be Idle or Reindexing)
+            let statusBadge = $(evt.target).closest('tr').find('.status-badge');
+
+            // Adds 'Last reindex date' for the current appropriate index.
+            let lastReindexTime = $(evt.target).closest('tr').find('time').text( new Date().toISOString().split('T')[0] );
 
             $('.start-reindex').attr('disabled', true);
             $('.clear-index').attr('disabled', true);
 
-            let statusBadge = $(evt.target).closest('tr').find('.status-badge');
 
             statusBadge.text('indexing...');
             statusBadge.removeClass (function (index, css) {

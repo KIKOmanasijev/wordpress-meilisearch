@@ -9,8 +9,9 @@
  * ✅ Show current stats of succeeded/failed posts while indexing.
  * ⏳ Front end facets
  * 📜 Checking for valid Meili connection before activating the plugin.
- * 📜 Syncing WP Posts to Meili's appropriate index.
- * 📜 Load all CPTs in the indexing table (WP dashboard)
+ * ✅ Syncing WP Posts to Meili's appropriate index.
+ * ✅ Load all CPTs in the indexing table (WP dashboard)
+ * ✅ Possibility to include/exclude CPTs via filters
  * 📜 Possibility to include/exclude CPTs via the dashboard
  *
  * @link              https://brandsgateway.com

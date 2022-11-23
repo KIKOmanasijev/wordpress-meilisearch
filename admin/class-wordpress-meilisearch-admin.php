@@ -161,6 +161,9 @@ class Wordpress_Meilisearch_Admin {
 
 		$this->repository->add_documents( $valid_documents, $index );
 
+		// Update Last reindex date for current index.
+		update_option("meilisearch_${index}_last_index", date('Y-m-d'));
+
 		wp_send_json([
 			'data'           => $_REQUEST['index'] ?? false,
 			'total'          => wp_count_posts( $index )->publish,

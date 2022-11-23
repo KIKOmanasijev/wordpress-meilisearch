@@ -42,7 +42,7 @@
                                                 <div class="flex space-x-2">
                                                     <div class="wp-menu-image dashicons-before <?= isset($icon) && strlen($icon) ? $icon : 'dashicons-admin-page' ?>"></div>
 
-                                                    <p class="truncate text-gray-500 group-hover:text-gray-900 capitalize"><?= $cpt ?></p>
+                                                    <p class="min-w-[120px] truncate text-gray-500 group-hover:text-gray-900 capitalize"><?= $cpt ?></p>
                                                 </div>
 
                                                 <div class="w-full bg-gray-200 rounded-full dark:bg-gray-700 hidden">
@@ -72,7 +72,7 @@
                                             </button>
                                         </td>
                                         <td class="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-500">
-                                            <time datetime="2020-07-11">July 11, 2020</time>
+                                            <time datetime="<?= get_option("meilisearch_${cpt}_last_index") ?: 'never' ?>"><?php echo get_option("meilisearch_${cpt}_last_index") ?: 'Never' ?></time>
                                         </td>
                                     </tr>
                                 <?php } ?>
