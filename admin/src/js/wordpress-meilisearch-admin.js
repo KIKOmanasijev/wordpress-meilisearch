@@ -69,7 +69,7 @@ var warningExitTimesShown = 0;
 
     async function start_reindex( action, index, offset, target = null, statusBadge = null ){
         let params = new URLSearchParams();
-        let progressBar = $(".progress[data-index='item']");
+        let progressBar = $(`.progress[data-index='${index}']`);
 
         params.append('action', action);
         params.append('index', index );
@@ -111,15 +111,20 @@ var warningExitTimesShown = 0;
         }
     }
 
-    async function clear_index( action, index){
+    async function clear_index( action, index = 'post'){
         let params = new URLSearchParams();
 
         params.append('action', action);
+        params.append('index', index);
 
         let data = await axios.post(wpMeiliRest.ajaxUrl, params);
 
         try {
-            window.alert('Index cleared. 🥳');
+            Swal.fire(
+                'Index cleared!',
+                '',
+                'success'
+            )
         } catch(e){
             console.log('Error occurred, try clearing the index later.');
             console.log(e);

@@ -121,6 +121,8 @@ class Wordpress_Meilisearch_Admin {
 	public function render_meilisearch_dashboard_page(){
 		ob_start();
 
+		$cpts = $this->get_all_cpts();
+
 		include_once( WORDPRESS_MEILISEARCH_PLUGIN_PATH . 'admin/partials/wordpress-meilisearch-admin-display.php' );
 
 		$template = ob_get_contents();
@@ -132,7 +134,7 @@ class Wordpress_Meilisearch_Admin {
 
 	public function handle_ajax_start_reindex(){
 
-		$index           = $_REQUEST['index'] ?? 'item';
+		$index           = $_REQUEST['index'] ?? 'post';
 		$offset          = $_REQUEST['offset'] ?? 0;
 		$posts_per_page  = 1000;
 		$errors          = [];
@@ -145,7 +147,7 @@ class Wordpress_Meilisearch_Admin {
 		]);
 
 		foreach ( $query->get_posts() as $post ){
-			$document = apply_filters( "meili_{$index}_index_settings", [ "id" => $post->ID ], $post );
+			$document = apply_filters( "meili_{$index}_index_settings", get_post( $post->ID, ARRAY_A ), $post );
 
 			if ( isset( $document['error'] ) && $document['error'] ){
 				$errors[] = sprintf('Product with id %s missing a category, skipping it.', $post->ID);
@@ -157,7 +159,7 @@ class Wordpress_Meilisearch_Admin {
 			}
 		}
 
-		$this->repository->add_documents( $valid_documents );
+		$this->repository->add_documents( $valid_documents, $index );
 
 		wp_send_json([
 			'data'           => $_REQUEST['index'] ?? false,
@@ -170,18 +172,29 @@ class Wordpress_Meilisearch_Admin {
 	}
 
 	public function handle_ajax_clear_index(){
-		$response = $this->repository->clear_index( 'items' );
+		$index = $_REQUEST['index'] ?? 'post';
 
-		var_dump( $response );
+		$this->repository->clear_index( $index );
 		die;
+	}
 
-		wp_send_json([
-			'data'           => $_REQUEST['index'] ?? false,
-			'total'          => wp_count_posts( $index )->publish,
-			'posts_per_page' => $posts_per_page,
-			'succeeded'      => $posts_per_page - count($errors),
-			'failed'         => count($errors)
-		], 200);
-		die;
+	private function get_all_cpts(){
+		// TODO: Filterable CPT exclusions
+		$cpts = array_filter( get_post_types( '', 'names' ), function( $post_type ){
+			return ! str_starts_with( $post_type, 'wp_' ) &&
+			       ! str_starts_with( $post_type, 'appframe_' ) &&
+			       ! str_starts_with( $post_type, 'shop_' ) &&
+			       ! str_starts_with( $post_type, 'oembed_' ) &&
+			       ! str_starts_with( $post_type, 'custom_' ) &&
+			       ! str_starts_with( $post_type, 'acf-' ) &&
+			       ! str_starts_with( $post_type, 'mailpoet_' ) &&
+			       ! str_starts_with( $post_type, 'nav_menu_' ) &&
+			       ! str_starts_with( $post_type, 'customize_' ) &&
+			       ! str_starts_with( $post_type, 'product_variation' ) &&
+			       ! str_starts_with( $post_type, 'user_request' ) &&
+			       ! str_starts_with( $post_type, 'revision' );
+		});
+
+		return $cpts;
 	}
 }
