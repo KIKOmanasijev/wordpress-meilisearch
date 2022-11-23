@@ -7,7 +7,7 @@
  * TODO: Move this file out of the plugin
  */
 
-add_filter( "meili_item_index_settings", "build_item_document", 10, 2);
+add_filter( "meilisearch_item_index_settings", "build_item_document", 10, 2);
 function build_item_document( $attributes, $post ){
 	$categories = wp_get_post_terms( $post->ID, 'item-category' );
 
@@ -48,7 +48,7 @@ function build_item_document( $attributes, $post ){
 	];
 }
 
-add_filter('meilisearch_modify_item_sort_options', "meili_item_modify_property_labels");
+add_filter('meilisearch_item_modify_sort_options', "meili_item_modify_property_labels");
 function meili_item_modify_property_labels( $items ){
 	$with_order = [];
 
@@ -90,4 +90,22 @@ function meili_item_modify_property_labels( $items ){
 	}
 
 	return array_reverse( $with_order );
+}
+
+add_filter('meilisearch_disable_cpts_by_prefixes_or_names', "meili_disable_some_cpts");
+function meili_disable_some_cpts( $cpts ){
+	return [
+		'wp_',
+		'appframe_',
+		'shop_',
+		'oembed_',
+		'custom_',
+		'acf-',
+		'mailpoet_',
+		'nav_menu_',
+		'customize_',
+		'product_variation',
+		'user_request',
+		'revision',
+	];
 }

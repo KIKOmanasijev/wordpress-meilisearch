@@ -147,7 +147,7 @@ class Wordpress_Meilisearch_Admin {
 		]);
 
 		foreach ( $query->get_posts() as $post ){
-			$document = apply_filters( "meili_{$index}_index_settings", get_post( $post->ID, ARRAY_A ), $post );
+			$document = apply_filters( "meilisearch_{$index}_index_settings", get_post( $post->ID, ARRAY_A ), $post );
 
 			if ( isset( $document['error'] ) && $document['error'] ){
 				$errors[] = sprintf('Product with id %s missing a category, skipping it.', $post->ID);
@@ -180,19 +180,16 @@ class Wordpress_Meilisearch_Admin {
 
 	private function get_all_cpts(){
 		// TODO: Filterable CPT exclusions
-		$cpts = array_filter( get_post_types( '', 'names' ), function( $post_type ){
-			return ! str_starts_with( $post_type, 'wp_' ) &&
-			       ! str_starts_with( $post_type, 'appframe_' ) &&
-			       ! str_starts_with( $post_type, 'shop_' ) &&
-			       ! str_starts_with( $post_type, 'oembed_' ) &&
-			       ! str_starts_with( $post_type, 'custom_' ) &&
-			       ! str_starts_with( $post_type, 'acf-' ) &&
-			       ! str_starts_with( $post_type, 'mailpoet_' ) &&
-			       ! str_starts_with( $post_type, 'nav_menu_' ) &&
-			       ! str_starts_with( $post_type, 'customize_' ) &&
-			       ! str_starts_with( $post_type, 'product_variation' ) &&
-			       ! str_starts_with( $post_type, 'user_request' ) &&
-			       ! str_starts_with( $post_type, 'revision' );
+		$disabled_cpt_prefixes = apply_filters('meilisearch_disable_cpts_by_prefixes_or_names', []);
+
+		$cpts = array_filter( get_post_types( '', 'names' ), function( $post_type ) use ( $disabled_cpt_prefixes ) {
+			foreach ( $disabled_cpt_prefixes as $prefix ){
+				if ( str_starts_with( $post_type, $prefix ) ){
+					return false;
+				}
+			}
+
+			return true;
 		});
 
 		return $cpts;
