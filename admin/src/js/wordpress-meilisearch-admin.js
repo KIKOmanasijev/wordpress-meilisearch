@@ -76,6 +76,7 @@ var warningExitTimesShown = 0;
     async function start_reindex( action, index, offset, target = null, statusBadge = null ){
         let params = new URLSearchParams();
         let progressBar = $(`.progress[data-index='${index}']`);
+        let percentage = 0;
 
         params.append('action', action);
         params.append('index', index );
@@ -89,9 +90,15 @@ var warningExitTimesShown = 0;
         try {
 
             if ( data.data.posts_per_page * offset <= parseInt(data.data.total) ){
-                let percentage  = ((data.data.posts_per_page * offset) / parseInt(data.data.total)) * 100;
+                if ( data.data.total == 0 ){
+                    percentage = 100;
+                } else {
+                    percentage  = ((data.data.posts_per_page * offset) / parseInt(data.data.total)) * 100;
+                }
+
                 update_counters( data.data.succeeded, data.data.failed );
                 start_reindex( action, index, ++offset, target, statusBadge );
+
                 update_progress_bar( progressBar, percentage )
             } else {
                 if ( target ){
