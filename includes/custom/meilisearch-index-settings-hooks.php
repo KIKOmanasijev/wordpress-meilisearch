@@ -48,7 +48,7 @@ function build_item_document( $attributes, $post ){
 	];
 }
 
-add_filter('meilisearch_modify_items_property_labels', "meili_item_modify_property_labels");
+add_filter('meilisearch_modify_item_sort_options', "meili_item_modify_property_labels");
 function meili_item_modify_property_labels( $items ){
 	$with_order = [];
 

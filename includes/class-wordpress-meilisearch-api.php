@@ -128,6 +128,6 @@ class Wordpress_Meilisearch_Api {
 			$this->client->index( $index )->getSortableAttributes()
 		);
 
-		return apply_filters('meilisearch_modify_item_property_labels', $results, 999 );
+		return apply_filters("meilisearch_modify_${index}_sort_options", $results, 999 );
 	}
 }
