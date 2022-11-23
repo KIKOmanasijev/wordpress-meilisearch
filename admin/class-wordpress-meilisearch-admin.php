@@ -165,7 +165,7 @@ class Wordpress_Meilisearch_Admin {
 			'data'           => $_REQUEST['index'] ?? false,
 			'total'          => wp_count_posts( $index )->publish,
 			'posts_per_page' => $posts_per_page,
-			'succeeded'      => $query->found_posts - count($errors),
+			'succeeded'      => $query->post_count - count($errors),
 			'failed'         => count($errors)
 		], 200);
 		die;
