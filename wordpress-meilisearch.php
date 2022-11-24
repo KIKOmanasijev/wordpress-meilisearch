@@ -7,6 +7,7 @@
  * ✅ Start indexing Item's CPT.
  * ✅ Animate progress bar when indexing certain CPT
  * ✅ Show current stats of succeeded/failed posts while indexing.
+ * ⏳ Configure filterable/sortable properties per index. Modal dialogs.
  * ⏳ Front end facets
  * 📜 Checking for valid Meili connection before activating the plugin.
  * ✅ Syncing WP Posts to Meili's appropriate index.

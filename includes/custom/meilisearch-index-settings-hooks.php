@@ -21,10 +21,10 @@ function build_item_document( $attributes, $post ){
 	$category = $categories[0]->name;
 	$category_link = get_term_link( $categories[0]->slug, 'item-category' );
 
-	$supplier_price = get_field('price', $post->ID );
-	$market_price = get_field('suggested_sale_price', $post->ID );
-	$profit = floatval( $market_price ) - floatval( $supplier_price );
-	$shipping_cost = get_field('shipping_cost', $post->ID) ?? 0;
+	$supplier_price = round( floatval( get_field('price', $post->ID ) ), 2 );
+	$market_price = round( floatval( get_field('suggested_sale_price', $post->ID ) ), 2 );
+	$profit = $market_price - $supplier_price;
+	$shipping_cost = round( floatval( get_field('shipping_cost', $post->ID) ?? 0 ), 2 );
 
 	$images = get_field( 'images', $post->ID );
 	$image = '';

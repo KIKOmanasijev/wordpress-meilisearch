@@ -48,17 +48,17 @@ class Wordpress_Meilisearch_Api {
 		$allowed_params = [ 'posts_per_page', 'page', 'q', 'sort_by' ];
 
 		$params = array_filter( $request->get_query_params(), function ( $key ) use ( $allowed_params, $filterable_attributes ) {
-			return in_array( $key, $filterable_attributes ) || in_array( $key, $allowed_params );
+			return in_array( $key, $filterable_attributes ) ||
+			       ! in_array( $key, $allowed_params ) ||
+			       ( str_starts_with( $key, 'range-min' ) || str_starts_with( $key, 'range-max' ) || in_array( substr( $key, 10 ), $filterable_attributes ) )
+				;
 		}, ARRAY_FILTER_USE_KEY );
 
 		$filters = [];
 
 		// Building Filters param array.
 		foreach ( $params as $key => $value ){
-			if ( ! in_array( $key, $filterable_attributes ) ){
-				continue;
-			}
-
+			// Checkboxes (any multiple choice field) value extraction.
 			if ( gettype( $value ) == 'array' ){
 				$arrayOfOrs = array_map(
 					function ( $item ) use ( $key ) {
@@ -68,9 +68,16 @@ class Wordpress_Meilisearch_Api {
 				);
 
 				$filters[] = $arrayOfOrs;
-			} else if ( gettype( $value ) == 'string' ) {
-				$filters[] = sprintf( "%s = '%s'", $key, htmlentities( $value ) );
-			}
+			// Search box, radio buttons (any single choice/value field), min-max value extraction.
+			} else if ( gettype( $value ) == 'string' && strlen( $value ) )
+				if ( str_starts_with( $key, 'range-min' ) ) {
+					$filters[] = sprintf( "%s > %s", substr( $key, 10 ), htmlentities( $value ) );
+				} else if ( str_starts_with( $key, 'range-max' ) ){
+					$filters[] = sprintf( "%s < %s", substr( $key, 10 ), htmlentities( $value ) );
+				}
+				else {
+					$filters[] = sprintf( "%s = '%s'", $key, htmlentities( $value ) );
+				}
 
 			unset( $params[ $key ] );
 		}
@@ -89,6 +96,7 @@ class Wordpress_Meilisearch_Api {
 		);
 
 		if ( $results->getHitsCount() ) {
+			// TODO: dynamically find the {index}-holder. Throw exceptions if views are missing.
 			echo \Roots\View('partials.meilisearch.partials.items-holder', [
 				'results' => $results->getHits(),
 				'totalHits' => $results->getEstimatedTotalHits(),

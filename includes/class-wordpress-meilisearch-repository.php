@@ -11,7 +11,11 @@ class Wordpress_Meilisearch_Repository {
 		$this->client->index('item')->updateFilterableAttributes([
 			'profit',
 			'category',
-			'status'
+			'status',
+			'market_price',
+			'shipping_cost',
+			'supplier_price',
+			'profit'
 		]);
 
 		// TODO: Implement this with a WP filter so sortable attributes is modifiable / use GUI settings in future?.
