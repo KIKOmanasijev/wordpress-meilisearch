@@ -24,6 +24,12 @@ class Wordpress_Meilisearch_Repository {
 			'profit',
 			'market_price'
 		]);
+
+		$this->client->index('item')->updateSettings([
+			'pagination' => [
+				'maxTotalHits'=> 150000
+			]
+		]);
 	}
 
 	public function add_documents( $documents, $indexName = 'post' ){

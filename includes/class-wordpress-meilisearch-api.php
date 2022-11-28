@@ -17,8 +17,8 @@ class Wordpress_Meilisearch_Api {
 		add_action( 'rest_api_init', [ $this, 'meilisearch_rest_api_init' ], PHP_INT_MAX );
 
 		// Hooks
-		add_filter( 'meilisearch_get_widget_options', [ $this, 'dropshipping_get_widget_options' ], 10, 3 );
-		add_filter( 'meilisearch_get_sort_options', [ $this, 'dropshipping_get_sort_options' ], 10, 2 );
+		add_filter( 'meilisearch_get_widget_options', [ $this, 'meilisearch_get_widget_options' ], 10, 3 );
+		add_filter( 'meilisearch_get_sort_options', [ $this, 'meilisearch_get_sort_options' ], 10, 2 );
 	}
 
 	public function meilisearch_rest_api_init() {
@@ -34,9 +34,10 @@ class Wordpress_Meilisearch_Api {
 
 	function wordpress_meilisearch_fetch( WP_REST_Request $request ) {
 		$posts_per_page = intval( $request['posts_per_page'] ?? 18 );
-		$page = intval( $request['page'] ?? 0 );
+		$page = abs( intval( $request['current_page'] ?? 1 ) - 1 );
+
 		$search = $request['q'] ?? '';
-		$sort_by = $request['sort_by'] ?? 'updated_at:desc';
+		$sort_by = $request['sort_by'] ?? 'updated_at:asc';
 
 		$post_type = $request['post_type'];
 
@@ -45,7 +46,7 @@ class Wordpress_Meilisearch_Api {
 
 		// Allowed query params to be sent from the front end.
 		// TODO: Implement this with filter so plugin-users can modify the list.
-		$allowed_params = [ 'posts_per_page', 'page', 'q', 'sort_by' ];
+		$allowed_params = [ 'posts_per_page', 'current_page', 'q', 'sort_by' ];
 
 		$params = array_filter( $request->get_query_params(), function ( $key ) use ( $allowed_params, $filterable_attributes ) {
 			return in_array( $key, $filterable_attributes ) ||
@@ -99,10 +100,11 @@ class Wordpress_Meilisearch_Api {
 			// TODO: dynamically find the {index}-holder. Throw exceptions if views are missing.
 			echo \Roots\View('partials.meilisearch.partials.items-holder', [
 				'results' => $results->getHits(),
-				'totalHits' => $results->getEstimatedTotalHits(),
+				'total_hits' => $results->getEstimatedTotalHits(),
+				'total_pages' => ceil( $results->getEstimatedTotalHits() / $posts_per_page ),
 				'response' => $results,
-				'page' => $results->getOffset(),
-				'sort_by' => $sort_by
+				'page' => $page + 1,
+				'sort_by' => $sort_by,
 			] )->render();
 		} else {
 			return new WP_Error( 400, 'No products found' );
@@ -111,7 +113,7 @@ class Wordpress_Meilisearch_Api {
 		die;
 	}
 
-	function dropshipping_get_widget_options( $options, $filter, $index = 'post' ){
+	function meilisearch_get_widget_options( $options, $filter, $index = 'post' ){
 		$results = $this->client->index( $index )->search('', [ 'facets' => ['*'] ]);
 
 		$facet_options = array_filter(
@@ -125,7 +127,7 @@ class Wordpress_Meilisearch_Api {
 		return array_pop($facet_options) ?? [];
 	}
 
-	function dropshipping_get_sort_options( $options, $index ){
+	function meilisearch_get_sort_options( $options, $index ){
 		$results =  array_map(
 			function( $option ){
 				return [

@@ -57,11 +57,11 @@ function meili_item_modify_property_labels( $items ){
 			case 'updated_at':
 				$with_order[] = [
 					'label' => 'Sort by oldest',
-					'value' => $item['value'] . ':asc'
+					'value' => $item['value'] . ':desc'
 				];
 				$with_order[] = [
 					'label' => 'Sort by newest',
-					'value' => $item['value'] . ':desc'
+					'value' => $item['value'] . ':asc'
 				];
 				break;
 			case 'profit':
