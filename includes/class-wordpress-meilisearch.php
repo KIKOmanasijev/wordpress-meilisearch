@@ -227,6 +227,9 @@ class Wordpress_Meilisearch {
 		$this->loader->add_action( 'wp_trash_post', $plugin_sync, 'action_sync_on_trash', 999 );
 
 		$this->loader->add_action( 'delete_post', $plugin_sync, 'action_sync_on_delete', 999 );
+
+		$this->loader->add_action( 'updated_post_meta', $plugin_sync, 'action_sync_on_meta_update', 999, 2 );
+		$this->loader->add_action( 'added_post_meta', $plugin_sync, 'action_sync_on_meta_update', 999, 2 );
 	}
 
 	/**

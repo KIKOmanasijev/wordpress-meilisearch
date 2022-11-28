@@ -78,4 +78,15 @@ class Wordpress_Meilisearch_Sync_Posts {
 		$this->repository->delete_documents( [ $post_id ], get_post_type( $post_id ) );
 	}
 
+	public function action_sync_on_meta_update( $meta_id, $post_id ){
+		$post_type = get_post_type( $post_id );
+
+		$document = apply_filters( "meilisearch_{$post_type}_index_settings", [ "id" => $post_id ], get_post( $post_id ) );
+
+		if ( isset( $document['error'] ) && $document['error'] ){
+			return;
+		}
+
+		$this->repository->add_documents( $document );
+	}
 }
