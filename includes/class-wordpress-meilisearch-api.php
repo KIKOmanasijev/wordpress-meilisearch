@@ -7,6 +7,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class Wordpress_Meilisearch_Api {
+	private Client $client;
+
 	public function __construct() {
 		$this->register_hooks();
 		$this->client = new Client('http://localhost:7700');
