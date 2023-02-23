@@ -223,13 +223,13 @@ class Wordpress_Meilisearch {
 		$this->loader->add_action( 'add_attachment', $plugin_sync, 'action_sync_on_update', 999 );
 		$this->loader->add_action( 'edit_attachment', $plugin_sync, 'action_sync_on_update', 999 );
 		$this->loader->add_action( 'publish_post', $plugin_sync, 'action_sync_on_update', 999 );
+		$this->loader->add_action( 'save_post', $plugin_sync, 'action_sync_on_update', 999 );
 
 		$this->loader->add_action( 'wp_trash_post', $plugin_sync, 'action_sync_on_trash', 999 );
-
 		$this->loader->add_action( 'delete_post', $plugin_sync, 'action_sync_on_delete', 999 );
 
-		$this->loader->add_action( 'updated_post_meta', $plugin_sync, 'action_sync_on_meta_update', 999, 2 );
-		$this->loader->add_action( 'added_post_meta', $plugin_sync, 'action_sync_on_meta_update', 999, 2 );
+		$this->loader->add_action( 'woocommerce_rest_insert_product_object', $plugin_sync, 'action_sync_on_update', 999, 2 );
+		$this->loader->add_action( 'woocommerce_rest_insert_product_variation_object', $plugin_sync, 'action_sync_on_update', 999, 2 );
 	}
 
 	/**

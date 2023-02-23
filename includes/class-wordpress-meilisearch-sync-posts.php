@@ -10,43 +10,50 @@
  */
 
 class Wordpress_Meilisearch_Sync_Posts {
-
-	/**
-	 * The ID of this plugin.
-	 *
-	 * @since    1.0.0
-	 * @access   private
-	 * @var      string    $plugin_name    The ID of this plugin.
-	 */
 	private $plugin_name;
-
-	/**
-	 * The version of this plugin.
-	 *
-	 * @since    1.0.0
-	 * @access   private
-	 * @var      string    $version    The current version of this plugin.
-	 */
 	private $version;
+	private $store = null;
 
-
-	/**
-	 * Initialize the class and set its properties.
-	 *
-	 * @since    1.0.0
-	 * @param      string    $plugin_name       The name of this plugin.
-	 * @param      string    $version    The version of this plugin.
-	 */
 	public function __construct( $plugin_name, $version ) {
-
 		$this->plugin_name = $plugin_name;
 		$this->version = $version;
 		$this->repository = new Wordpress_Meilisearch_Repository();
+		$this->logger = new WC_Logger();
+		$this->deleted_posts = [];
+
+		$this->register_handling_as_actions();
+
+		add_action('init', [$this, 'register_action_scheduler_store'], 999);
+	}
+
+	public function register_action_scheduler_store(){
+		$this->store = ActionScheduler::store();
+	}
+
+	public function register_handling_as_actions() {
+		add_action( 'wc_brands_gateway_on_post_delete', array( $this, 'handle_wc_brands_gateway_on_post_delete' ), 10, 2 );
+		add_action( 'wc_brands_gateway_on_post_trash', array( $this, 'handle_wc_brands_gateway_on_post_trash' ), 10, 1 );
+		add_action( 'wc_brands_gateway_on_post_update', array( $this, 'handle_wc_brands_gateway_on_post_update' ), 10, 1 );
 	}
 
 	public function action_sync_on_update( $post_id ){
+		as_enqueue_async_action('wc_brands_gateway_on_post_update', [$post_id], 'wordpress-meilisearch');
+	}
+
+	public function action_sync_on_trash( $post_id ){
+		as_enqueue_async_action('wc_brands_gateway_on_post_trash', [$post_id], 'wordpress-meilisearch');
+	}
+
+	public function action_sync_on_delete( $post_id ){
+		$this->cancel_bg_tasks_for_product_before_delete($post_id);
+
+		$post_type = wc_get_product($post_id) ? 'product' : get_post_type($post_id);
+
+		as_enqueue_async_action('wc_brands_gateway_on_post_delete', [$post_id, $post_type], 'wordpress-meilisearch');
+	}
+
+	public function handle_wc_brands_gateway_on_post_update( $post_id ){
 		$post_type = get_post_type( $post_id );
-		$errors = [];
 
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 			return;
@@ -56,9 +63,11 @@ class Wordpress_Meilisearch_Sync_Posts {
 			return;
 		}
 
-		// TODO: implement this with a dynamic whitelisted list of CPTs
-		if ( $post_type != 'item' ){
-			return;
+		if ( $product = wc_get_product( $post_id ) ){
+			if ( $product->get_parent_id() !== 0 ){
+				$post_id = $product->get_parent_id();
+				$post_type = 'product';
+			}
 		}
 
 		$document = apply_filters( "meilisearch_{$post_type}_index_settings", [ "id" => $post_id ], get_post( $post_id ) );
@@ -67,26 +76,34 @@ class Wordpress_Meilisearch_Sync_Posts {
 			return;
 		}
 
-		$this->repository->add_documents( $document );
+		$this->repository->add_documents( $document, $post_type );
 	}
 
-	public function action_sync_on_trash( $post_id ){
-		$this->repository->update_status_on_documents( [ $post_id ], get_post_type( $post_id ) );
-	}
-
-	public function action_sync_on_delete( $post_id ){
-		$this->repository->delete_documents( [ $post_id ], get_post_type( $post_id ) );
-	}
-
-	public function action_sync_on_meta_update( $meta_id, $post_id ){
-		$post_type = get_post_type( $post_id );
-
-		$document = apply_filters( "meilisearch_{$post_type}_index_settings", [ "id" => $post_id ], get_post( $post_id ) );
-
-		if ( isset( $document['error'] ) && $document['error'] ){
-			return;
+	public function handle_wc_brands_gateway_on_post_delete($post_id, $post_type){
+		try {
+			$this->repository->delete_documents( [ $post_id ], $post_type );
+		} catch (Exception $e){
+			$this->logger->critical($e->getTraceAsString());
 		}
+	}
 
-		$this->repository->add_documents( $document );
+	public function handle_wc_brands_gateway_on_post_trash($post_id){
+		$post_type = wc_get_product($post_id) ? 'product' : get_post_type($post_id);
+
+		$this->repository->update_status_on_documents( [ $post_id ], $post_type );
+	}
+
+	public function cancel_bg_tasks_for_product_before_delete($post_id) {
+		$args = array(
+			'args' => array( $post_id ),
+			'group' => 'wordpress-meilisearch',
+			'per_page' => -1,
+		);
+
+		$actions = as_get_scheduled_actions($args);
+
+		foreach ($actions as $key => $action) {
+			$this->store->mark_complete($key);
+		}
 	}
 }

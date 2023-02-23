@@ -3,36 +3,44 @@
 use MeiliSearch\Client;
 
 class Wordpress_Meilisearch_Repository {
+	private array $deleted_posts;
+
 	public function __construct(){
 		// TODO: dynamic server credentials
 		$this->client = new Client('http://localhost:7700');
 
 		// TODO: Implement this with a WP filter so filterable attributes is modifiable / use GUI settings in future?.
-		$this->client->index('item')->updateFilterableAttributes([
-			'profit',
-			'category',
-			'status',
-			'market_price',
-			'shipping_cost',
-			'supplier_price',
-			'profit'
+		$this->client->index('product')->updateFilterableAttributes([
+			'brand',
+			'category_hierarchical.lvl0',
+			'category_hierarchical.lvl1',
+			'category_hierarchical.lvl2'
 		]);
 
 		// TODO: Implement this with a WP filter so sortable attributes is modifiable / use GUI settings in future?.
-		$this->client->index('item')->updateSortableAttributes([
-			'updated_at',
-			'profit',
-			'market_price'
+		$this->client->index('product')->updateSortableAttributes([
+			'regular_price',
+			'sale_price',
+			'post_date'
 		]);
 
-		$this->client->index('item')->updateSettings([
+		// TODO: Implement this with a WP filter
+		$this->client->index('product')->updateSettings([
 			'pagination' => [
 				'maxTotalHits'=> 150000
 			]
 		]);
+
+		$this->deleted_posts = [];
 	}
 
 	public function add_documents( $documents, $indexName = 'post' ){
+		foreach ( $documents as $key => $post_id ){
+			if ( in_array( $post_id, $this->deleted_posts ) ){
+				unset( $documents[$key] );
+			}
+		}
+
 		try {
 			$index = $this->client->getIndex($indexName);
 		} catch(Exception $e){
@@ -47,8 +55,20 @@ class Wordpress_Meilisearch_Repository {
 	}
 
 	public function delete_documents( $documents, $index = 'post' ){
-		// TODO: dynamic index choosing
-		$this->client->index( $index )->deleteDocuments($documents);
+		$logger = new WC_Logger();
+
+		foreach ( $documents as $key => $post_id ){
+			if ( in_array( $post_id, $this->deleted_posts ) ){
+				unset( $documents[$key] );
+			}
+		}
+
+		try {
+			// TODO: dynamic index choosing
+			$this->client->index( $index )->deleteDocuments($documents);
+		} catch (Exception $e){
+			$logger->error($e->getTraceAsString());
+		}
 	}
 
 	public function update_status_on_documents( $documents, $index = 'post' ){
@@ -57,6 +77,10 @@ class Wordpress_Meilisearch_Repository {
 		}
 
 		foreach ( $documents as $post_id ){
+			if ( in_array( $post_id, $this->deleted_posts ) ){
+				continue;
+			}
+
 			$this->client->index( $index )->updateDocuments([
 				[
 					'id' => $post_id,

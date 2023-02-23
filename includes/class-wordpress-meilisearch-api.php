@@ -39,23 +39,31 @@ class Wordpress_Meilisearch_Api {
 		$page = abs( intval( $request['current_page'] ?? 1 ) - 1 );
 
 		$search = $request['q'] ?? '';
-		$sort_by = $request['sort_by'] ?? 'updated_at:asc';
-
+		$sort_by = $request['sort_by'] ?? 'post_date:desc';
 		$post_type = $request['post_type'];
 
+		$facet_data = $this->client->index( $post_type )->search(
+			'',
+			[ 'facets' => ['*'] ]
+		);
+
 		// Filterable attributes for the index.
-		$filterable_attributes = $this->client->index('item')->getSettings()['filterableAttributes'];
+		$filterable_attributes = $this->client->index('product')->getSettings()['filterableAttributes'];
 
-		// Allowed query params to be sent from the front end.
-		// TODO: Implement this with filter so plugin-users can modify the list.
-		$allowed_params = [ 'posts_per_page', 'current_page', 'q', 'sort_by' ];
+		$request_params = $request->get_query_params();
 
-		$params = array_filter( $request->get_query_params(), function ( $key ) use ( $allowed_params, $filterable_attributes ) {
+		foreach ( $request_params as $key => $value ){
+			if ( str_contains($key, '_hierarchical_lvl') ){
+				unset($request_params[$key]);
+				$request_params[str_replace('hierarchical_lvl', 'hierarchical.lvl', $key)] = $value;
+			}
+		}
+
+		$params = array_filter( $request_params, function ( $value, $key ) use ( $filterable_attributes ) {
 			return in_array( $key, $filterable_attributes ) ||
-			       ! in_array( $key, $allowed_params ) ||
 			       ( str_starts_with( $key, 'range-min' ) || str_starts_with( $key, 'range-max' ) || in_array( substr( $key, 10 ), $filterable_attributes ) )
 				;
-		}, ARRAY_FILTER_USE_KEY );
+		}, ARRAY_FILTER_USE_BOTH );
 
 		$filters = [];
 
@@ -65,7 +73,7 @@ class Wordpress_Meilisearch_Api {
 			if ( gettype( $value ) == 'array' ){
 				$arrayOfOrs = array_map(
 					function ( $item ) use ( $key ) {
-						return sprintf( "%s = '%s'", $key, htmlentities( $item ) );
+						return sprintf( "%s = '%s'", $key,  $item );
 					},
 					$value
 				);
@@ -74,12 +82,12 @@ class Wordpress_Meilisearch_Api {
 			// Search box, radio buttons (any single choice/value field), min-max value extraction.
 			} else if ( gettype( $value ) == 'string' && strlen( $value ) )
 				if ( str_starts_with( $key, 'range-min' ) ) {
-					$filters[] = sprintf( "%s > %s", substr( $key, 10 ), htmlentities( $value ) );
+					$filters[] = sprintf( "%s > %s", substr( $key, 10 ), $value );
 				} else if ( str_starts_with( $key, 'range-max' ) ){
-					$filters[] = sprintf( "%s < %s", substr( $key, 10 ), htmlentities( $value ) );
+					$filters[] = sprintf( "%s < %s", substr( $key, 10 ), $value );
 				}
 				else {
-					$filters[] = sprintf( "%s = '%s'", $key, htmlentities( $value ) );
+					$filters[] = sprintf( "%s = '%s'", $key,  $value );
 				}
 
 			unset( $params[ $key ] );
@@ -100,13 +108,15 @@ class Wordpress_Meilisearch_Api {
 
 		if ( $results->getHitsCount() ) {
 			// TODO: dynamically find the {index}-holder. Throw exceptions if views are missing.
-			echo \Roots\View('partials.meilisearch.partials.items-holder', [
+
+			echo \Roots\View('partials.meilisearch.archives.items', [
 				'results' => $results->getHits(),
 				'total_hits' => $results->getEstimatedTotalHits(),
 				'total_pages' => ceil( $results->getEstimatedTotalHits() / $posts_per_page ),
 				'response' => $results,
 				'page' => $page + 1,
 				'sort_by' => $sort_by,
+				'facets' => $facet_data->getFacetDistribution()
 			] )->render();
 		} else {
 			return new WP_Error( 400, 'No products found' );
@@ -121,6 +131,9 @@ class Wordpress_Meilisearch_Api {
 		$facet_options = array_filter(
 			$results->getFacetDistribution(),
 			function( $facetFilter ) use ( $filter ) {
+				if (gettype($filter) == 'array')
+					return in_array($facetFilter, $filter);
+
 				return $facetFilter == $filter;
 			},
 			ARRAY_FILTER_USE_KEY
