@@ -14,7 +14,8 @@ class Wordpress_Meilisearch_Repository {
 			'brand',
 			'category_hierarchical.lvl0',
 			'category_hierarchical.lvl1',
-			'category_hierarchical.lvl2'
+			'category_hierarchical.lvl2',
+			'brand'
 		]);
 
 		// TODO: Implement this with a WP filter so sortable attributes is modifiable / use GUI settings in future?.
@@ -41,17 +42,21 @@ class Wordpress_Meilisearch_Repository {
 			}
 		}
 
-		try {
-			$index = $this->client->getIndex($indexName);
-		} catch(Exception $e){
-			$createIndexResponse = $this->client->createIndex($indexName);
-
-			$this->client->waitForTask( $createIndexResponse['taskUid'] );
-
-			$index = $this->client->getIndex($indexName);
-		}
+		$index = $this->get_or_create_index($indexName);
 
 		$index->addDocuments( $documents );
+	}
+
+	public function update_documents( $documents, $indexName = 'post' ){
+		foreach ( $documents as $key => $post_id ){
+			if ( in_array( $post_id, $this->deleted_posts ) ){
+				unset( $documents[$key] );
+			}
+		}
+
+		$index = $this->get_or_create_index($indexName);
+
+		$index->updateDocuments( $documents );
 	}
 
 	public function delete_documents( $documents, $index = 'post' ){
@@ -92,5 +97,17 @@ class Wordpress_Meilisearch_Repository {
 
 	public function clear_index( $index ){
 		return $this->client->index( $index )->delete();
+	}
+
+	private function get_or_create_index($indexName){
+		try {
+			return $this->client->getIndex($indexName);
+		} catch(Exception $e){
+			$createIndexResponse = $this->client->createIndex($indexName);
+
+			$this->client->waitForTask( $createIndexResponse['taskUid'] );
+
+			return $this->client->getIndex($indexName);
+		}
 	}
 }

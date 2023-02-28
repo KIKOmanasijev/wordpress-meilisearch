@@ -216,20 +216,18 @@ class Wordpress_Meilisearch {
 	 * @access   private
 	 */
 	private function define_sync_hooks() {
-
 		$plugin_sync = new Wordpress_Meilisearch_Sync_Posts( $this->get_plugin_name(), $this->get_version() );
 
-		$this->loader->add_action( 'wp_insert_post', $plugin_sync, 'action_sync_on_update', 999 );
-		$this->loader->add_action( 'add_attachment', $plugin_sync, 'action_sync_on_update', 999 );
-		$this->loader->add_action( 'edit_attachment', $plugin_sync, 'action_sync_on_update', 999 );
+		$this->loader->add_action( 'wp_insert_post', $plugin_sync, 'action_sync_on_add', 999 );
+
 		$this->loader->add_action( 'publish_post', $plugin_sync, 'action_sync_on_update', 999 );
 		$this->loader->add_action( 'save_post', $plugin_sync, 'action_sync_on_update', 999 );
 
 		$this->loader->add_action( 'wp_trash_post', $plugin_sync, 'action_sync_on_trash', 999 );
-		$this->loader->add_action( 'delete_post', $plugin_sync, 'action_sync_on_delete', 999 );
+		$this->loader->add_action( 'before_delete_post', $plugin_sync, 'action_sync_on_delete', 999 );
 
-		$this->loader->add_action( 'woocommerce_rest_insert_product_object', $plugin_sync, 'action_sync_on_update', 999, 2 );
-		$this->loader->add_action( 'woocommerce_rest_insert_product_variation_object', $plugin_sync, 'action_sync_on_update', 999, 2 );
+		$this->loader->add_action( 'woocommerce_rest_insert_product_object', $plugin_sync, 'action_sync_on_update', 999 );
+		$this->loader->add_action( 'woocommerce_rest_insert_product_variation_object', $plugin_sync, 'action_sync_on_update', 999 );
 	}
 
 	/**

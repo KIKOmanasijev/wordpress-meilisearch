@@ -44,7 +44,7 @@ function build_item_document( $attributes, $post ){
 	$gender = '';
 	$product_type = '';
 	$vendor = array();
-	$brands = array();
+	$brands = '';
 	$categories = array();
 	$categories_hierarchical = array();
 	$vendor_sku = array();
@@ -97,11 +97,7 @@ function build_item_document( $attributes, $post ){
 
 	/* @var WP_Term $brand_term */
 	foreach ( wc_get_object_terms( $product->get_id(), 'product_brand' ) as $brand_term ) {
-		$brands[] = array(
-			'id' => $brand_term->term_id,
-			'name' => $brand_term->name,
-			'slug' => $brand_term->slug,
-		);
+		$brands = $brand_term->name;
 	}
 
 	/* @var WP_Term $category_term */

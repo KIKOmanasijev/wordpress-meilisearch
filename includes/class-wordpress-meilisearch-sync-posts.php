@@ -31,64 +31,81 @@ class Wordpress_Meilisearch_Sync_Posts {
 	}
 
 	public function register_handling_as_actions() {
-		add_action( 'wc_brands_gateway_on_post_delete', array( $this, 'handle_wc_brands_gateway_on_post_delete' ), 10, 2 );
-		add_action( 'wc_brands_gateway_on_post_trash', array( $this, 'handle_wc_brands_gateway_on_post_trash' ), 10, 1 );
-		add_action( 'wc_brands_gateway_on_post_update', array( $this, 'handle_wc_brands_gateway_on_post_update' ), 10, 1 );
+		add_action( 'wc_brands_gateway_on_post_add', array( $this, 'handle_wc_brands_gateway_on_post_add' ), 999, 1 );
+
+		add_action( 'wc_brands_gateway_on_post_delete', array( $this, 'handle_wc_brands_gateway_on_post_delete' ), 999, 2 );
+
+		add_action( 'wc_brands_gateway_on_post_trash', array( $this, 'handle_wc_brands_gateway_on_post_trash' ), 999, 1 );
+
+		add_action( 'wc_brands_gateway_on_post_update', array( $this, 'handle_wc_brands_gateway_on_post_update' ), 999, 1 );
+	}
+
+	public function action_sync_on_add( $post_id ){
+		as_enqueue_async_action('wc_brands_gateway_on_post_add', array( $post_id ), 'wordpress-meilisearch');
 	}
 
 	public function action_sync_on_update( $post_id ){
-		as_enqueue_async_action('wc_brands_gateway_on_post_update', [$post_id], 'wordpress-meilisearch');
+		if ( $post_id ){
+			as_enqueue_async_action('wc_brands_gateway_on_post_update', array( $post_id ), 'wordpress-meilisearch');
+		}
 	}
 
 	public function action_sync_on_trash( $post_id ){
-		as_enqueue_async_action('wc_brands_gateway_on_post_trash', [$post_id], 'wordpress-meilisearch');
+		$product = wc_get_product( $post_id );
+
+		// Ignore variations since we don't store the in Meili.
+		if ( is_a($product, WC_Product_Variation::class ) ){
+			return;
+		}
+
+		as_enqueue_async_action('wc_brands_gateway_on_post_trash', array( $post_id ), 'wordpress-meilisearch');
 	}
 
 	public function action_sync_on_delete( $post_id ){
+		$post_type = $this->get_post_type_from_id($post_id);
+
 		$this->cancel_bg_tasks_for_product_before_delete($post_id);
 
-		$post_type = wc_get_product($post_id) ? 'product' : get_post_type($post_id);
+		as_enqueue_async_action(
+			'wc_brands_gateway_on_post_delete',
+			array( $post_id, $post_type ),
+			'wordpress-meilisearch'
+		);
+	}
 
-		as_enqueue_async_action('wc_brands_gateway_on_post_delete', [$post_id, $post_type], 'wordpress-meilisearch');
+	public function handle_wc_brands_gateway_on_post_add( $post_id ){
+		$post_type = $this->get_post_type_from_id( $post_id );
+
+		$document = $this->generate_document_structure_by_post_id($post_id, $post_type);
+
+		if ( $document ){
+			$this->repository->add_documents( [ $document ], $post_type );
+		}
 	}
 
 	public function handle_wc_brands_gateway_on_post_update( $post_id ){
-		$post_type = get_post_type( $post_id );
+		$post_type = $this->get_post_type_from_id( $post_id );
 
-		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-			return;
+		$document = $this->generate_document_structure_by_post_id($post_id, $post_type);
+
+		if ( $document ){
+			$this->repository->update_documents( [ $document ], $post_type );
 		}
-
-		if ( ! current_user_can( 'edit_post', $post_id )  ) {
-			return;
-		}
-
-		if ( $product = wc_get_product( $post_id ) ){
-			if ( $product->get_parent_id() !== 0 ){
-				$post_id = $product->get_parent_id();
-				$post_type = 'product';
-			}
-		}
-
-		$document = apply_filters( "meilisearch_{$post_type}_index_settings", [ "id" => $post_id ], get_post( $post_id ) );
-
-		if ( isset( $document['error'] ) && $document['error'] ){
-			return;
-		}
-
-		$this->repository->add_documents( $document, $post_type );
 	}
 
 	public function handle_wc_brands_gateway_on_post_delete($post_id, $post_type){
 		try {
-			$this->repository->delete_documents( [ $post_id ], $post_type );
+			$this->repository->delete_documents(
+				is_array( $post_id ) ? $post_id : array( $post_id ),
+				$post_type
+			);
 		} catch (Exception $e){
 			$this->logger->critical($e->getTraceAsString());
 		}
 	}
 
 	public function handle_wc_brands_gateway_on_post_trash($post_id){
-		$post_type = wc_get_product($post_id) ? 'product' : get_post_type($post_id);
+		$post_type = $this->get_post_type_from_id($post_id);
 
 		$this->repository->update_status_on_documents( [ $post_id ], $post_type );
 	}
@@ -105,5 +122,34 @@ class Wordpress_Meilisearch_Sync_Posts {
 		foreach ($actions as $key => $action) {
 			$this->store->mark_complete($key);
 		}
+	}
+
+	private function get_post_type_from_id($post_id): string{
+		return wc_get_product($post_id) ? 'product' : get_post_type($post_id);
+	}
+
+	private function generate_document_structure_by_post_id($post_id, $post_type){
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return false;
+		}
+
+		if ( ! current_user_can( 'edit_post', $post_id )  ) {
+			return false;
+		}
+
+		if ( $product = wc_get_product( $post_id ) ){
+			if ( is_a($product, WC_Product_Variation::class) ){
+				$post_id = $product->get_parent_id();
+				$post_type = 'product';
+			}
+		}
+
+		$document = apply_filters( "meilisearch_{$post_type}_index_settings", [ "id" => $post_id ], get_post( $post_id ) );
+
+		if ( isset( $document['error'] ) && $document['error'] ){
+			return false;
+		}
+
+		return $document;
 	}
 }
