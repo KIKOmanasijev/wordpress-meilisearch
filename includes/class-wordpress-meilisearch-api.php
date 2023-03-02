@@ -34,14 +34,14 @@ class Wordpress_Meilisearch_Api {
 			));
 	}
 
-	function wordpress_meilisearch_fetch( WP_REST_Request $request ) {
+	public function wordpress_meilisearch_fetch( WP_REST_Request $request ) {
 		$search_params = $this->extract_search_params_from_request($request);
 
 		// Run 'empty' query so we can get all possible facet values. Needs to be cached in the future.
 		$facet_data = $this->client->index( $search_params['post_type'] )->search('',[ 'facets' => ['*'] ]);
 
 		// Filterable attributes for the index.
-		$filterable_attributes = $this->client->index('product')->getSettings()['filterableAttributes'];
+		$filterable_attributes = $this->client->index( $search_params['post_type'] )->getSettings()['filterableAttributes'];
 
 		// This is needed since PHP is replacing '.' with '_' in the query param keys.
 		$request_params = $this->replace_underscore_suffix_with_dot_in_array_keys($request->get_query_params());
@@ -85,12 +85,14 @@ class Wordpress_Meilisearch_Api {
 			unset( $params[ $key ] );
 		}
 
+		$extra_filters = apply_filters("meilisearch_{$search_params['post_type']}_extra_filters", []);
+
 		$options = [
 			'sort'   => [ $search_params['sort_by'] ],
 			'facets' => [ '*' ],
 			'offset' => $search_params['posts_per_page'] * $search_params['page'],
 			'limit'  => $search_params['posts_per_page'],
-			'filter'  => $filters
+			'filter'  => array_merge( $filters, $extra_filters )
 		];
 
 		$results = $this->client->index( $search_params['post_type'] )->search(
@@ -126,7 +128,7 @@ class Wordpress_Meilisearch_Api {
 		die;
 	}
 
-	function meilisearch_get_widget_options( $options, $filter, $index = 'post' ){
+	public function meilisearch_get_widget_options( $options, $filter, $index = 'post' ){
 		$results = $this->client->index( $index )->search('', [ 'facets' => ['*'] ]);
 
 		$facet_options = array_filter(
@@ -143,7 +145,7 @@ class Wordpress_Meilisearch_Api {
 		return array_pop($facet_options) ?? [];
 	}
 
-	function meilisearch_get_sort_options( $options, $index ){
+	public function meilisearch_get_sort_options( $options, $index ){
 		$results =  array_map(
 			function( $option ){
 				return [

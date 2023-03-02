@@ -138,6 +138,7 @@ class Wordpress_Meilisearch_Sync_Posts {
 		}
 
 		if ( $product = wc_get_product( $post_id ) ){
+			// If the product is a variation, use the parent to generate a document and update it.
 			if ( is_a($product, WC_Product_Variation::class) ){
 				$post_id = $product->get_parent_id();
 				$post_type = 'product';

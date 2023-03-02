@@ -15,7 +15,8 @@ class Wordpress_Meilisearch_Repository {
 			'category_hierarchical.lvl0',
 			'category_hierarchical.lvl1',
 			'category_hierarchical.lvl2',
-			'brand'
+			'vendor',
+			'status'
 		]);
 
 		// TODO: Implement this with a WP filter so sortable attributes is modifiable / use GUI settings in future?.

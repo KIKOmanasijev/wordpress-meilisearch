@@ -43,11 +43,10 @@ function build_item_document( $attributes, $post ){
 	$quantity = 0;
 	$gender = '';
 	$product_type = '';
-	$vendor = array();
+	$vendor = '';
 	$brands = '';
 	$categories = array();
 	$categories_hierarchical = array();
-	$vendor_sku = array();
 	$external_id = array( $product->get_meta( '_external_id' ) );
 	$size = array();
 	$color = array();
@@ -58,7 +57,6 @@ function build_item_document( $attributes, $post ){
 		$price = $max_price = wc_get_price_to_display( $product );
 		$regular_price = wc_get_price_to_display( $product, array( 'price' => $product->get_regular_price() ) );
 		$sale_price = wc_get_price_to_display( $product, array( 'price' => $product->get_sale_price() ) );
-		$vendor_sku[] = $product->get_meta( '_vendor_sku' );
 		$product_type = 'simple';
 	}
 
@@ -73,7 +71,6 @@ function build_item_document( $attributes, $post ){
 		/* @var WC_Product_Variation $variation */
 		foreach ( array_map( 'wc_get_product', $product->get_children() ) as $variation ) {
 			$quantity = $quantity + $variation->get_stock_quantity();
-			$vendor_sku[] = $variation->get_meta( '_vendor_sku' );
 			$external_id[] = $variation->get_meta( '_variation_external_id' );
 		}
 	}
@@ -86,12 +83,7 @@ function build_item_document( $attributes, $post ){
 
 		/* @var WP_Term $vendor_term */
 		foreach ( wc_get_object_terms( $product->get_id(), WC_PRODUCT_VENDORS_TAXONOMY ) as $vendor_term ) {
-			$vendor = array(
-				'id' => $vendor_term->term_id,
-				'name' => $vendor_term->name,
-				'slug' => $vendor_term->slug,
-				'sku' => array_filter( $vendor_sku, function( $value ) { return ! empty( $value ); } ),
-			);
+			$vendor = $vendor_term->name;
 		}
 	}
 
@@ -255,6 +247,11 @@ function meili_disable_some_cpts( $cpts ){
 		'user_request',
 		'revision',
 	];
+}
+
+add_filter('meilisearch_product_extra_filters', "meili_append_extra_filters_for_product");
+function meili_append_extra_filters_for_product($filters){
+	return [ 'status=publish' ];
 }
 
 function get_taxonomy_tree( array $terms, $taxonomy, $separator = ' > ' ) {
