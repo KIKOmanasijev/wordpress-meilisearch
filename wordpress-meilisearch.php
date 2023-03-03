@@ -2,6 +2,9 @@
 
 include 'vendor/autoload.php';
 
+require_once plugin_dir_path( __FILE__ ) . 'includes/class-wordpress-meilisearch-activator.php';
+require_once plugin_dir_path( __FILE__ ) . 'includes/class-wordpress-meilisearch-deactivator.php';
+
 /**
  *
  * To-Do's:
@@ -10,12 +13,15 @@ include 'vendor/autoload.php';
  * ✅ Animate progress bar when indexing certain CPT
  * ✅ Show current stats of succeeded/failed posts while indexing.
  * ⏳ Configure filterable/sortable properties per index. Modal dialogs.
- * ⏳ Front end facets
+ * ✅ Front end facets
  * 📜 Checking for valid Meili connection before activating the plugin.
  * ✅ Syncing WP Posts to Meili's appropriate index.
  * ✅ Load all CPTs in the indexing table (WP dashboard)
  * ✅ Possibility to include/exclude CPTs via filters
  * 📜 Possibility to include/exclude CPTs via the dashboard
+ * ⏳ Optimise CLI scripts
+ * 📜 Re-index for single post (CLI)
+ * 📜 Re-index for single post (GUI)
  *
  * @link              https://brandsgateway.com
  * @since             1.0.0
@@ -39,6 +45,17 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
+
+if (! Wordpress_Meilisearch_Activator::can_activate() ) {
+	add_action( 'admin_notices', function(){
+		echo '<div class="error">';
+		echo '<p>🚨 The connection with the Meilisearch database instance has failed, try again later or contact the developer. </p>';
+		echo '</div>';
+	} );
+	return;
+}
+
+
 /**
  * Currently plugin version.
  * Start at version 1.0.0 and use SemVer - https://semver.org
@@ -52,7 +69,6 @@ define( 'WORDPRESS_MEILISEARCH_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
  * This action is documented in includes/class-wordpress-meilisearch-activator.php
  */
 function activate_wordpress_meilisearch() {
-	require_once plugin_dir_path( __FILE__ ) . 'includes/class-wordpress-meilisearch-activator.php';
 	Wordpress_Meilisearch_Activator::activate();
 }
 
@@ -61,7 +77,6 @@ function activate_wordpress_meilisearch() {
  * This action is documented in includes/class-wordpress-meilisearch-deactivator.php
  */
 function deactivate_wordpress_meilisearch() {
-	require_once plugin_dir_path( __FILE__ ) . 'includes/class-wordpress-meilisearch-deactivator.php';
 	Wordpress_Meilisearch_Deactivator::deactivate();
 }
 
