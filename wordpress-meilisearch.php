@@ -49,7 +49,7 @@ if ( ! defined( 'WPINC' ) ) {
 if (! Wordpress_Meilisearch_Activator::can_activate() ) {
 	add_action( 'admin_notices', function(){
 		echo '<div class="error">';
-		echo '<p>🚨 The connection with the Meilisearch database instance has failed, try again later or contact the developer. </p>';
+		echo '<p>🚨 ' . Wordpress_Meilisearch_Activator::$message . '</p>';
 		echo '</div>';
 	} );
 	return;
