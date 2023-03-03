@@ -35,13 +35,34 @@ class Wordpress_Meilisearch_Activator {
 	}
 
 	public static function can_activate(): bool {
+		return (
+			self::settings_defined() &&
+			self::meili_client_class_exists() &&
+			self::check_server_connection()
+		);
+	}
+
+	private static function settings_defined():bool{
+		if (! defined('MEILISEARCH_HOST') ){
+			self::$message = 'You are missing `MEILISEARCH_HOST` in the configuration. Please add it in your wp-config.php or .env file.';
+			return false;
+		}
+
+		return true;
+	}
+
+	private static function meili_client_class_exists() {
 		if (! class_exists( \Meilisearch\Client::class ) ){
 			self::$message = '`\Meilisearch\Client::class` does not exist, please run `composer install` in the plugin folder';
 			return false;
 		}
 
+		return true;
+	}
+
+	private static function check_server_connection() {
 		try {
-			$client = new \Meilisearch\Client('http://localhost:7700');
+			$client = new \Meilisearch\Client(MEILISEARCH_HOST);
 		} catch (\Exception $exception){
 			self::$message = 'The connection to the Meilisearch server failed, please check the server credentials.';
 			return false;
