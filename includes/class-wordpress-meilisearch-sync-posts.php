@@ -62,7 +62,7 @@ class Wordpress_Meilisearch_Sync_Posts {
 	}
 
 	public function action_sync_on_delete( $post_id ){
-		$post_type = $this->get_post_type_from_id($post_id);
+		$post_type = Wordpress_Meilisearch_Helper::get_index_by_post_id($post_id);
 
 		$this->cancel_bg_tasks_for_product_before_delete($post_id);
 
@@ -74,7 +74,7 @@ class Wordpress_Meilisearch_Sync_Posts {
 	}
 
 	public function handle_wc_brands_gateway_on_post_add( $post_id ){
-		$post_type = $this->get_post_type_from_id( $post_id );
+		$post_type = Wordpress_Meilisearch_Helper::get_index_by_post_id( $post_id );
 
 		$document = $this->generate_document_structure_by_post_id($post_id, $post_type);
 
@@ -84,7 +84,7 @@ class Wordpress_Meilisearch_Sync_Posts {
 	}
 
 	public function handle_wc_brands_gateway_on_post_update( $post_id ){
-		$post_type = $this->get_post_type_from_id( $post_id );
+		$post_type = Wordpress_Meilisearch_Helper::get_index_by_post_id( $post_id );
 
 		$document = $this->generate_document_structure_by_post_id($post_id, $post_type);
 
@@ -105,7 +105,7 @@ class Wordpress_Meilisearch_Sync_Posts {
 	}
 
 	public function handle_wc_brands_gateway_on_post_trash($post_id){
-		$post_type = $this->get_post_type_from_id($post_id);
+		$post_type = Wordpress_Meilisearch_Helper::get_index_by_post_id($post_id);
 
 		$this->repository->update_status_on_documents( [ $post_id ], $post_type );
 	}
@@ -122,10 +122,6 @@ class Wordpress_Meilisearch_Sync_Posts {
 		foreach ($actions as $key => $action) {
 			$this->store->mark_complete($key);
 		}
-	}
-
-	private function get_post_type_from_id($post_id): string{
-		return wc_get_product($post_id) ? 'product' : get_post_type($post_id);
 	}
 
 	private function generate_document_structure_by_post_id($post_id, $post_type){

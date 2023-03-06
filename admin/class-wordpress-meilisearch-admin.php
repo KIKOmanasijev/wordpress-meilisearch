@@ -10,16 +10,6 @@
  * @subpackage Wordpress_Meilisearch/admin
  */
 
-/**
- * The admin-specific functionality of the plugin.
- *
- * Defines the plugin name, version, and two examples hooks for how to
- * enqueue the admin-specific stylesheet and JavaScript.
- *
- * @package    Wordpress_Meilisearch
- * @subpackage Wordpress_Meilisearch/admin
- * @author     Hristijan Manasijev <hristijan@digitalnode.com>
- */
 class Wordpress_Meilisearch_Admin {
 
 	/**
@@ -62,42 +52,10 @@ class Wordpress_Meilisearch_Admin {
 	 * @since    1.0.0
 	 */
 	public function enqueue_styles() {
-
-		/**
-		 * This function is provided for demonstration purposes only.
-		 *
-		 * An instance of this class should be passed to the run() function
-		 * defined in Wordpress_Meilisearch_Loader as all of the hooks are defined
-		 * in that particular class.
-		 *
-		 * The Wordpress_Meilisearch_Loader will then create the relationship
-		 * between the defined hooks and the functions defined in this
-		 * class.
-		 */
-
 		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'dist/css/main.css', array(), $this->version, 'all' );
-
 	}
 
-	/**
-	 * Register the JavaScript for the admin area.
-	 *
-	 * @since    1.0.0
-	 */
 	public function enqueue_scripts() {
-
-		/**
-		 * This function is provided for demonstration purposes only.
-		 *
-		 * An instance of this class should be passed to the run() function
-		 * defined in Wordpress_Meilisearch_Loader as all of the hooks are defined
-		 * in that particular class.
-		 *
-		 * The Wordpress_Meilisearch_Loader will then create the relationship
-		 * between the defined hooks and the functions defined in this
-		 * class.
-		 */
-
 		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'dist/js/main.bundle.js', array( 'jquery' ), $this->version, false );
 
 		wp_localize_script( $this->plugin_name, 'wpMeiliRest', array(
@@ -196,5 +154,98 @@ class Wordpress_Meilisearch_Admin {
 		});
 
 		return $cpts;
+	}
+
+	public function add_sync_row_action($actions, $post){
+			$actions['sync_meili'] = sprintf(
+				"<a href=\"%sedit.php?post_type=%s&action=%s&post=%s&_wpnonce=%s\" aria-label=\"%s\" rel=\"permalink\">%s</a>",
+				admin_url(),
+				urlencode(get_post_type($post->ID)),
+				urlencode('sync_cpt'),
+				urlencode($post->ID),
+				wp_create_nonce('sync_meili_post'),
+				esc_attr__('Sync Post with Meili'),
+				esc_html__('🔄 Sync with Meili')
+			);
+
+		return $actions;
+	}
+
+	public function action_sync_post_with_meili($post_id){
+		if ( empty( $_REQUEST['post'] ) ) {
+			wp_die( esc_html__( 'No product to duplicate has been supplied!', 'woocommerce' ) );
+		}
+
+		$post_id = isset( $_REQUEST['post'] ) ? absint( $_REQUEST['post'] ) : '';
+
+		$index = Wordpress_Meilisearch_Helper::get_index_by_post_id($post_id);
+
+		$document = apply_filters( "meilisearch_{$index}_index_settings", get_post( $post_id, ARRAY_A ), get_post($post_id) );
+
+		// Cancel all other Meilisearch hooks before triggering another update.
+		Wordpress_Meilisearch_Helper::cancel_bg_tasks_for_product_before_delete($post_id);
+
+		// Force-update the document
+		$this->repository->update_documents([$document], $index);
+
+		$this->add_flash_notice(
+			__( "🥳 The post was synced with the Meilisearch database."),
+			"success"
+		);
+
+		$redirect_link = $this->get_admin_cpt_page_for_post($post_id);
+
+		wp_redirect($redirect_link);
+		die;
+	}
+
+	public function add_flash_notice( $notice = "", $type = "warning", $dismissible = true ) {
+		// Here we return the notices saved on our option, if there are not notices, then an empty array is returned
+		$notices = get_option( "my_flash_notices", array() );
+
+		$dismissible_text = ( $dismissible ) ? "is-dismissible" : "";
+
+		// We add our new notice.
+		array_push( $notices, array(
+			"notice" => $notice,
+			"type" => $type,
+			"dismissible" => $dismissible_text
+		) );
+
+		// Then we update the option with our notices array
+		update_option("my_flash_notices", $notices );
+	}
+
+	public function display_flash_notices() {
+		$notices = get_option( "my_flash_notices", array() );
+
+		// Iterate through our notices to be displayed and print them.
+		foreach ( $notices as $notice ) {
+			printf('<div class="notice notice-%1$s %2$s"><p>%3$s</p></div>',
+				$notice['type'],
+				$notice['dismissible'],
+				$notice['notice']
+			);
+		}
+
+		// Now we reset our options to prevent notices being displayed forever.
+		if( ! empty( $notices ) ) {
+			delete_option( "my_flash_notices", array() );
+		}
+	}
+
+	private function get_admin_cpt_page_for_post( int $post_id ) {
+		$preview_link = admin_url('edit.php');
+
+		if ($preview_link) {
+			$preview_link = add_query_arg('post_type', get_post_type($post_id), $preview_link);
+			$preview_link = add_query_arg('preview', 'true', $preview_link);
+		}
+
+		return $preview_link;
+	}
+
+	public function register_action_scheduler_store(){
+		Wordpress_Meilisearch_Helper::$store = ActionScheduler::store();
 	}
 }

@@ -31,7 +31,11 @@ class Wordpress_Meilisearch_Activator {
 	 * @since    1.0.0
 	 */
 	public static function activate() {
-
+		add_action( 'admin_notices', function () {
+			echo '<div class="notice notice-success is-dismissible">';
+			echo '<p> 🙌 Congrats, the Wordpress Meilisearch plugin has been activated! </p>';
+			echo '</div>';
+		} );
 	}
 
 	public static function can_activate(): bool {

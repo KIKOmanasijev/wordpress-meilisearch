@@ -107,6 +107,11 @@ class Wordpress_Meilisearch {
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-wordpress-meilisearch-loader.php';
 
 		/**
+		 * The class responsible for providing helper functions across the plugin.
+		 */
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-wordpress-meilisearch-helpers.php';
+
+		/**
 		 * The class responsible for defining internationalization functionality
 		 * of the plugin.
 		 */
@@ -184,12 +189,22 @@ class Wordpress_Meilisearch {
 		$plugin_admin = new Wordpress_Meilisearch_Admin( $this->get_plugin_name(), $this->get_version() );
 
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
+
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
 
 		$this->loader->add_action( 'admin_menu', $plugin_admin, 'create_meilisearch_dashboard_page' );
 
 		$this->loader->add_action( 'wp_ajax_start_reindex', $plugin_admin, 'handle_ajax_start_reindex' );
+
 		$this->loader->add_action( 'wp_ajax_clear_index', $plugin_admin, 'handle_ajax_clear_index' );
+
+		$this->loader->add_filter( 'post_row_actions', $plugin_admin, 'add_sync_row_action', 999, 2);
+
+		$this->loader->add_action( 'admin_action_sync_cpt', $plugin_admin, 'action_sync_post_with_meili', 999, 2);
+
+		$this->loader->add_action( 'admin_notices', $plugin_admin, 'display_flash_notices', 12 );
+
+		$this->loader->add_action( 'admin_init', $plugin_admin, 'register_action_scheduler_store' );
 	}
 
 	/**
