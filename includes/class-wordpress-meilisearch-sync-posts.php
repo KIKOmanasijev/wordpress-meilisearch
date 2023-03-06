@@ -64,7 +64,7 @@ class Wordpress_Meilisearch_Sync_Posts {
 	public function action_sync_on_delete( $post_id ){
 		$post_type = Wordpress_Meilisearch_Helper::get_index_by_post_id($post_id);
 
-		$this->cancel_bg_tasks_for_product_before_delete($post_id);
+		Wordpress_Meilisearch_Helper::cancel_bg_tasks_for_product_before_delete($post_id);
 
 		as_enqueue_async_action(
 			'wc_brands_gateway_on_post_delete',
@@ -108,20 +108,6 @@ class Wordpress_Meilisearch_Sync_Posts {
 		$post_type = Wordpress_Meilisearch_Helper::get_index_by_post_id($post_id);
 
 		$this->repository->update_status_on_documents( [ $post_id ], $post_type );
-	}
-
-	public function cancel_bg_tasks_for_product_before_delete($post_id) {
-		$args = array(
-			'args' => array( $post_id ),
-			'group' => 'wordpress-meilisearch',
-			'per_page' => -1,
-		);
-
-		$actions = as_get_scheduled_actions($args);
-
-		foreach ($actions as $key => $action) {
-			$this->store->mark_complete($key);
-		}
 	}
 
 	private function generate_document_structure_by_post_id($post_id, $post_type){
