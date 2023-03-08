@@ -36,26 +36,26 @@ class Wordpress_Meilisearch_Repository {
 		$this->deleted_posts = [];
 	}
 
-	public function add_documents( $documents, $indexName = 'post' ){
+	public function add_documents( $documents, $index_name = 'post' ){
 		foreach ( $documents as $key => $post_id ){
 			if ( in_array( $post_id, $this->deleted_posts ) ){
 				unset( $documents[$key] );
 			}
 		}
 
-		$index = $this->get_or_create_index($indexName);
+		$index = $this->get_or_create_index($index_name);
 
 		$index->addDocuments( $documents );
 	}
 
-	public function update_documents( $documents, $indexName = 'post' ){
+	public function update_documents( $documents, $index_name = 'post' ){
 		foreach ( $documents as $key => $post_id ){
 			if ( in_array( $post_id, $this->deleted_posts ) ){
 				unset( $documents[$key] );
 			}
 		}
 
-		$index = $this->get_or_create_index($indexName);
+		$index = $this->get_or_create_index($index_name);
 
 		$index->updateDocuments( $documents );
 	}
@@ -100,15 +100,15 @@ class Wordpress_Meilisearch_Repository {
 		return $this->client->index( $index )->delete();
 	}
 
-	private function get_or_create_index($indexName){
+	private function get_or_create_index($index_name){
 		try {
-			return $this->client->getIndex($indexName);
+			return $this->client->getIndex($index_name);
 		} catch(Exception $e){
-			$createIndexResponse = $this->client->createIndex($indexName);
+			$createIndexResponse = $this->client->createIndex($index_name);
 
 			$this->client->waitForTask( $createIndexResponse['taskUid'] );
 
-			return $this->client->getIndex($indexName);
+			return $this->client->getIndex($index_name);
 		}
 	}
 }

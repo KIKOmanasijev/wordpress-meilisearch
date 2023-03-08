@@ -91,43 +91,27 @@ class Wordpress_Meilisearch_Admin {
 	}
 
 	public function handle_ajax_start_reindex(){
-
 		$index           = $_REQUEST['index'] ?? 'post';
 		$offset          = $_REQUEST['offset'] ?? 0;
-		$posts_per_page  = 1000;
-		$errors          = [];
-		$valid_documents = [];
+		$posts_per_page  = 100;
 
-		$query = new WP_Query([
-			'posts_per_page' => $posts_per_page,
-			'post_type'      => $index,
-			'offset'         => $offset * $posts_per_page
+		$result = Wordpress_Meilisearch_Helper::get_documents_for_index_with_wp_args($index, [
+			'posts_per_page'  => $posts_per_page,
+			'offset'    => $offset * $posts_per_page,
+			'post_type' => $index
 		]);
 
-		foreach ( $query->get_posts() as $post ){
-			$document = apply_filters( "meilisearch_{$index}_index_settings", get_post( $post->ID, ARRAY_A ), $post );
-
-			if ( isset( $document['error'] ) && $document['error'] ){
-				$errors[] = sprintf('Product with id %s missing a category, skipping it.', $post->ID);
-				continue;
-			}
-
-			if ( $document ){
-				$valid_documents[] = $document;
-			}
-		}
-
-		$this->repository->add_documents( $valid_documents, $index );
+		$this->repository->add_documents( $result['documents'], $index );
 
 		// Update Last reindex date for current index.
 		update_option("meilisearch_${index}_last_index", date('Y-m-d'));
 
 		wp_send_json([
-			'data'           => $_REQUEST['index'] ?? false,
+			'data'           => $index,
 			'total'          => wp_count_posts( $index )->publish,
 			'posts_per_page' => $posts_per_page,
-			'succeeded'      => $query->post_count - count($errors),
-			'failed'         => count($errors)
+			'succeeded'      => count($result['documents']),
+			'failed'         => count($result['errors'])
 		], 200);
 		die;
 	}

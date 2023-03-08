@@ -38,4 +38,30 @@ class Wordpress_Meilisearch_Helper {
 			self::$store->mark_complete($key);
 		}
 	}
+
+	public static function get_documents_for_index_with_wp_args($index, $settings){
+		$valid_documents = [];
+		$errors = [];
+
+		$query = new WP_Query([
+			'posts_per_page' => $settings['posts_per_page'],
+			'post_type'      => $settings['post_type'],
+			'offset'         => $settings['offset'],
+		]);
+
+		foreach ( $query->get_posts() as $post ){
+			$document = apply_filters( "meilisearch_{$index}_index_settings", get_post( $post->ID, ARRAY_A ), $post );
+
+			if ( isset( $document['error'] ) && $document['error'] ){
+				$errors[] = sprintf('Product with id %s missing a category, skipping it.', $post->ID);
+				continue;
+			}
+
+			if ( $document ){
+				$valid_documents[] = $document;
+			}
+		}
+
+		return [ 'documents' => $valid_documents, 'errors' => $errors ];
+	}
 }

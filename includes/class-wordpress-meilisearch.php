@@ -149,9 +149,15 @@ class Wordpress_Meilisearch {
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-wordpress-meilisearch-api.php';
 
 		/**
+		 * TODO: Document this class
+		 */
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-wordpress-meilisearch-cli.php';
+
+		/**
 		 * TODO: Document this class.
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/custom/meilisearch-index-settings-hooks.php';
+
 
 		$this->loader = new Wordpress_Meilisearch_Loader();
 

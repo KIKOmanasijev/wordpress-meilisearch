@@ -53,7 +53,7 @@ class Wordpress_Meilisearch_Sync_Posts {
 	public function action_sync_on_trash( $post_id ){
 		$product = wc_get_product( $post_id );
 
-		// Ignore variations since we don't store the in Meili.
+		// Ignore variations since we don't store them in Meili.
 		if ( is_a($product, WC_Product_Variation::class ) ){
 			return;
 		}
